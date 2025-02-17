@@ -59,9 +59,9 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "22.04-LTS"
-    version   = "22.04.202402080"
+    offer     = "0001-com-ubuntu-server-focal"
+    sku       = "20_04-lts"
+    version   = "latest"
   }
 }
 
