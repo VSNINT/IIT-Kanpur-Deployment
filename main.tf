@@ -34,7 +34,7 @@ resource "azurerm_public_ip" "pip" {
   name                = "vm-${count.index}-pip"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  allocation_method   = "Dynamic"
+  allocation_method   = "Static"
 }
 
 # Generate Random Passwords
@@ -65,7 +65,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
-    sku       = "22_04-lts"
+    sku       = "22.04-LTS"
     version   = "latest"
   }
 }
