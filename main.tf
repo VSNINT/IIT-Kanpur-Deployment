@@ -1,3 +1,5 @@
+
+
 provider "azurerm" {
   features {}
 
@@ -28,15 +30,6 @@ resource "azurerm_subnet" "subnet" {
   address_prefixes     = ["10.0.1.0/24"]
 }
 
-# Create Public IPs for each VM
-resource "azurerm_public_ip" "pip" {
-  count               = var.vm_count
-  name                = "vm-${count.index}-pip"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  allocation_method   = "Static"
-}
-
 # Generate Random Passwords
 resource "random_password" "passwords" {
   count   = var.vm_count
@@ -58,8 +51,10 @@ resource "azurerm_linux_virtual_machine" "vm" {
   network_interface_ids = [azurerm_network_interface.nic[count.index].id]
 
   os_disk {
+    name                 = "vm-${count.index}-osdisk"
     caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    storage_account_type = "Standard_LRS" # Standard HDD for S10 Disk
+    disk_size_gb         = 128
   }
 
   source_image_reference {
@@ -70,7 +65,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   }
 }
 
-# Create Network Interfaces for each VM
+# Create Network Interfaces for each VM (Without Public IP)
 resource "azurerm_network_interface" "nic" {
   count               = var.vm_count
   name                = "vm-${count.index}-nic"
@@ -81,7 +76,6 @@ resource "azurerm_network_interface" "nic" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.pip[count.index].id
   }
 }
 
@@ -106,9 +100,9 @@ resource "random_password" "mysql_password" {
   special = false
 }
 
-# Save VM Credentials Locally
+# Save VM Credentials Locally (Without Public IP)
 resource "local_file" "vm_credentials" {
-  content  = join("\n", [for i in range(var.vm_count) : "VM-${i} | User: ${var.admin_username} | Password: ${random_password.passwords[i].result} | Public IP: ${azurerm_public_ip.pip[i].ip_address}"])
+  content  = join("\n", [for i in range(var.vm_count) : "VM-${i} | User: ${var.admin_username} | Password: ${random_password.passwords[i].result} | Private IP: ${azurerm_network_interface.nic[i].private_ip_address}"])
   filename = "${path.module}/vm_credentials.txt"
 }
 
@@ -117,3 +111,4 @@ resource "local_file" "mysql_credentials" {
   content  = "MySQL Server: ${azurerm_mysql_flexible_server.mysql.fqdn} | User: mysqladmin | Password: ${random_password.mysql_password.result}"
   filename = "${path.module}/mysql_credentials.txt"
 }
+
