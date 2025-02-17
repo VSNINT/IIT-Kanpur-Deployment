@@ -1,6 +1,4 @@
-output "vm_public_ips" {
-  value = [for i in azurerm_public_ip.pip : i.ip_address]
-}
+
 
 output "vm_credentials_file" {
   value = local_file.vm_credentials.filename
